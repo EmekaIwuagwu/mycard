@@ -68,30 +68,32 @@ def ach_charge():
     routing_number = request.form['routing_number']
 
     try:
-        # Create a bank account token using Stripe's API
-        bank_account_token = stripe.Token.create({
-            'bank_account': {
+        # Create a PaymentMethod for ACH payment
+        payment_method = stripe.PaymentMethod.create(
+            type='us_bank_account',
+            us_bank_account={
                 'account_number': account_number,
                 'routing_number': routing_number,
-                'country': 'US',
                 'account_holder_name': request.form['name'],
                 'account_holder_type': 'individual',  # or 'company'
             },
-        })
+        )
 
         # Create a PaymentIntent for the ACH payment
         payment_intent = stripe.PaymentIntent.create(
             amount=amount,
             currency='usd',
-            payment_method=bank_account_token.id,
-            confirmation_method='automatic',  # Automatically confirm the payment
-            confirm=True,  # Automatically confirm the payment
+            payment_method=payment_method.id,
+            confirmation_method='automatic',
+            confirm=True,
             description='ACH Payment for amount $' + '{:.2f}'.format(amount / 100.0),
         )
         
         return redirect('/success?ref={}'.format(payment_intent.id))
 
     except stripe.error.StripeError as e:
+        # Log the error for debugging
+        print(f"Stripe Error: {str(e)}")
         return 'Error: {}'.format(str(e))
 
 
