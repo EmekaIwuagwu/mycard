@@ -62,7 +62,6 @@ def charge():
         return 'Error: {}'.format(str(e))
 
 
-
 @app.route('/ach_charge', methods=['POST'])
 def ach_charge():
     amount = int(float(request.form['amount']) * 100)  # Convert to cents
@@ -96,8 +95,8 @@ def ach_charge():
         return redirect('/success?ref={}'.format(payment_intent.id))
 
     except stripe.error.StripeError as e:
-        # Log the error for debugging
-        print(f"Stripe Error: {str(e)}")
+        # Python 2.7 string formatting
+        print("Stripe Error: {}".format(str(e)))
         return 'Error: {}'.format(str(e))
 
 
