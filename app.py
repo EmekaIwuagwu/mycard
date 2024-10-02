@@ -5,9 +5,10 @@ import stripe
 app = Flask(__name__)
 
 # Hardcoded Stripe secret and public keys
-STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY', 'pk_test_51Q44BMFHz9inXqLwQhDWvdMJFrWWpiGyRxlusfoDkT9bAIBy1Chsdw7AJflhOWmxF5bp6CXyRscKUTveS1m5tOGM00uKJKZALZ')
-STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', 'sk_test_51Q44BMFHz9inXqLwaRmVsewpCyTkD233i79dkIchcfLuSQLoCmZqMpdLhikiZOSnRc57SPfWLI2BtVG1A6BSPAbU00vfIVLRph')
+STRIPE_PUBLIC_KEY = 'pk_test_51Q44BMFHz9inXqLwQhDWvdMJFrWWpiGyRxlusfoDkT9bAIBy1Chsdw7AJflhOWmxF5bp6CXyRscKUTveS1m5tOGM00uKJKZALZ'
+STRIPE_SECRET_KEY = 'sk_test_51Q44BMFHz9inXqLwaRmVsewpCyTkD233i79dkIchcfLuSQLoCmZqMpdLhikiZOSnRc57SPfWLI2BtVG1A6BSPAbU00vfIVLRph'
 
+# Set the Stripe secret key
 stripe.api_key = STRIPE_SECRET_KEY
 
 @app.route('/')
@@ -95,4 +96,4 @@ def success():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))  # Use PORT environment variable or default to 5000
-    app.run(host='0.0.0.0', port=port, debug=False)  # Bind to 0.0.0.0 for external access
+    app.run(host='0.0.0.0', port=port, debug=True)  # Set debug=True for development
