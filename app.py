@@ -67,9 +67,10 @@ def ach_charge():
     amount = int(float(request.form['amount']) * 100)  # Convert to cents
     account_number = request.form['account_number']
     routing_number = request.form['routing_number']
-    return_url = 'http://bizmark.com/success'  # Set this to your actual success page
+    name = request.form['name']
 
     try:
+        # Create a PaymentMethod for ACH payment
         payment_method = stripe.PaymentMethod.create(
             type='us_bank_account',
             us_bank_account={
@@ -78,10 +79,11 @@ def ach_charge():
                 'account_holder_type': 'individual',  # or 'company'
             },
             billing_details={
-                'name': request.form['name'],
+                'name': name,
             }
         )
 
+        # Create a PaymentIntent with mandate data for ACH payments
         payment_intent = stripe.PaymentIntent.create(
             amount=amount,
             currency='usd',
@@ -89,15 +91,25 @@ def ach_charge():
             confirmation_method='automatic',
             confirm=True,
             description='ACH Payment for amount $' + '{:.2f}'.format(amount / 100.0),
-            return_url=return_url  # Add return URL here
+            mandate_data={
+                'customer_acceptance': {
+                    'type': 'online',
+                    'online': {
+                        'ip_address': request.remote_addr,  # IP address of the customer
+                        'user_agent': request.headers.get('User-Agent'),  # User-agent of the customer
+                    }
+                }
+            },
+            return_url='http://ibex.com/success',  # Replace with your actual success page
         )
-
+        
+        # Redirect to the success page if the payment is successful
         return redirect('/success?ref={}'.format(payment_intent.id))
 
     except stripe.error.StripeError as e:
+        # Log and show Stripe error
         print("Stripe Error: {}".format(str(e)))
         return 'Error: {}'.format(str(e))
-
 
 
 @app.route('/success')
