@@ -79,16 +79,21 @@ def ach_charge():
             },
         })
 
-        charge = stripe.Charge.create(
+        # Create a PaymentIntent for the ACH payment
+        payment_intent = stripe.PaymentIntent.create(
             amount=amount,
             currency='usd',
-            source=bank_account_token.id,
+            payment_method=bank_account_token.id,
+            confirmation_method='automatic',  # Automatically confirm the payment
+            confirm=True,  # Automatically confirm the payment
             description='ACH Payment for amount $' + '{:.2f}'.format(amount / 100.0),
         )
-        return redirect('/success?ref={}'.format(charge.id))
+        
+        return redirect('/success?ref={}'.format(payment_intent.id))
 
     except stripe.error.StripeError as e:
         return 'Error: {}'.format(str(e))
+
 
 @app.route('/success')
 def success():
