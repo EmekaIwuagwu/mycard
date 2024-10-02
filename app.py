@@ -61,26 +61,26 @@ def charge():
     except stripe.error.StripeError as e:
         return 'Error: {}'.format(str(e))
 
+
+
 @app.route('/ach_charge', methods=['POST'])
 def ach_charge():
     amount = int(float(request.form['amount']) * 100)  # Convert to cents
     account_number = request.form['account_number']
     routing_number = request.form['routing_number']
 
-    # Debugging: Print the API key and Stripe request details
-    print "Using Stripe Secret Key: {}".format(stripe.api_key)
-    print "Account Number: {}, Routing Number: {}".format(account_number, routing_number)
-
     try:
-        # Create a PaymentMethod for ACH payment
+        # Corrected version: Pass account_holder_name and other billing details in 'billing_details'
         payment_method = stripe.PaymentMethod.create(
             type='us_bank_account',
             us_bank_account={
                 'account_number': account_number,
                 'routing_number': routing_number,
-                'account_holder_name': request.form['name'],
                 'account_holder_type': 'individual',  # or 'company'
             },
+            billing_details={
+                'name': request.form['name'],  # Move account_holder_name here
+            }
         )
 
         # Create a PaymentIntent for the ACH payment
@@ -97,7 +97,7 @@ def ach_charge():
 
     except stripe.error.StripeError as e:
         # Log the error for debugging
-        print "Stripe Error: {}".format(str(e))
+        print(f"Stripe Error: {str(e)}")
         return 'Error: {}'.format(str(e))
 
 
