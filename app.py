@@ -67,6 +67,10 @@ def ach_charge():
     account_number = request.form['account_number']
     routing_number = request.form['routing_number']
 
+    # Debugging: Print the API key and Stripe request details
+    print "Using Stripe Secret Key: {}".format(stripe.api_key)
+    print "Account Number: {}, Routing Number: {}".format(account_number, routing_number)
+
     try:
         # Create a PaymentMethod for ACH payment
         payment_method = stripe.PaymentMethod.create(
@@ -93,7 +97,7 @@ def ach_charge():
 
     except stripe.error.StripeError as e:
         # Log the error for debugging
-        print(f"Stripe Error: {str(e)}")
+        print "Stripe Error: {}".format(str(e))
         return 'Error: {}'.format(str(e))
 
 
