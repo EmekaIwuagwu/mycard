@@ -5,8 +5,8 @@ import stripe
 app = Flask(__name__)
 
 # Hardcoded Stripe secret and public keys
-STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY', 'pk_live_51Q44BMFHz9inXqLwPH9i0W0OTZbgV2Qwdp1B4HlhF6vOiYuA7EsrBadxzEoebbw73FlDMCN580qsoLSDExSbQSVL00kJG6JQvY')
-STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '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')
+STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY', 'pk_test_51Q44BMFHz9inXqLwQhDWvdMJFrWWpiGyRxlusfoDkT9bAIBy1Chsdw7AJflhOWmxF5bp6CXyRscKUTveS1m5tOGM00uKJKZALZ')
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', 'sk_test_51Q44BMFHz9inXqLwaRmVsewpCyTkD233i79dkIchcfLuSQLoCmZqMpdLhikiZOSnRc57SPfWLI2BtVG1A6BSPAbU00vfIVLRph')
 
 stripe.api_key = STRIPE_SECRET_KEY
 
@@ -17,7 +17,17 @@ def index():
 @app.route('/payment', methods=['POST'])
 def payment_redirect():
     amount = request.form['amount']  # Get amount from form submission
-    return render_template('payment.html', amount=amount, public_key=STRIPE_PUBLIC_KEY)
+    return render_template('payment_method_selection.html', amount=amount)
+
+@app.route('/payment_method', methods=['POST'])
+def payment_method():
+    amount = request.form['amount']
+    payment_method = request.form['payment_method']
+    
+    if payment_method == 'credit_card':
+        return render_template('payment.html', amount=amount, public_key=STRIPE_PUBLIC_KEY, method='credit_card')
+    elif payment_method == 'ach':
+        return render_template('ach_payment.html', amount=amount)
 
 @app.route('/charge', methods=['POST'])
 def charge():
@@ -50,6 +60,34 @@ def charge():
     except stripe.error.StripeError as e:
         return 'Error: {}'.format(str(e))
 
+@app.route('/ach_charge', methods=['POST'])
+def ach_charge():
+    amount = int(float(request.form['amount']) * 100)  # Convert to cents
+    account_number = request.form['account_number']
+    routing_number = request.form['routing_number']
+
+    try:
+        # Create a bank account token using Stripe's API
+        bank_account_token = stripe.Token.create({
+            'bank_account': {
+                'account_number': account_number,
+                'routing_number': routing_number,
+                'country': 'US',
+                'account_holder_name': request.form['name'],
+                'account_holder_type': 'individual',  # or 'company'
+            },
+        })
+
+        charge = stripe.Charge.create(
+            amount=amount,
+            currency='usd',
+            source=bank_account_token.id,
+            description='ACH Payment for amount $' + '{:.2f}'.format(amount / 100.0),
+        )
+        return redirect('/success?ref={}'.format(charge.id))
+
+    except stripe.error.StripeError as e:
+        return 'Error: {}'.format(str(e))
 
 @app.route('/success')
 def success():

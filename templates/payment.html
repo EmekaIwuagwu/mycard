@@ -12,7 +12,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         .container {
-            max-width: 600px;
+            max-width: 500px;
             margin-top: 100px;
             padding: 30px;
             background-color: white;
@@ -24,6 +24,14 @@
             margin-bottom: 30px;
             color: #007bff;
         }
+        .btn-primary {
+            background-color: #007bff;
+            border: none;
+            transition: background-color 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
         .form-control {
             border-radius: 5px;
             border: 1px solid #ced4da;
@@ -32,85 +40,68 @@
             box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
             border-color: #007bff;
         }
-        #card-element {
-            border: 1px solid #ced4da;
-            border-radius: 5px;
-            padding: 10px;
-        }
-        #card-element:focus {
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-            border-color: #007bff;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Payment of ${{ amount }}</h2>
+        <h2>Pay with Credit Card</h2>
         <form action="/charge" method="POST" id="payment-form">
             <input type="hidden" name="amount" value="{{ amount }}">
             <div class="form-group">
-                <label for="name">Name:</label>
-                <input type="text" class="form-control" id="name" name="name" required>
+                <label for="name">Name on Card:</label>
+                <input type="text" class="form-control" name="name" required>
             </div>
             <div class="form-group">
                 <label for="address">Address:</label>
-                <input type="text" class="form-control" id="address" name="address" required>
+                <input type="text" class="form-control" name="address" required>
             </div>
             <div class="form-group">
-                <label for="zip">Zip Code:</label>
-                <input type="text" class="form-control" id="zip" name="zip" required>
+                <label for="zip">ZIP Code:</label>
+                <input type="text" class="form-control" name="zip" required>
             </div>
             <div class="form-group">
                 <label for="country">Country:</label>
-                <input type="text" class="form-control" id="country" name="country" required>
+                <input type="text" class="form-control" name="country" required>
             </div>
-            <div id="card-element" class="form-control"></div>
-            <button type="submit" class="btn btn-primary btn-block mt-3">Pay Now</button>
+            <div id="card-element"><!-- A Stripe Element will be inserted here. --></div>
+            <button type="submit" class="btn btn-primary btn-block mt-4">Pay Now</button>
         </form>
         <div id="card-errors" role="alert"></div>
     </div>
-
     <script>
-        var stripe = Stripe('pk_live_51Q44BMFHz9inXqLwPH9i0W0OTZbgV2Qwdp1B4HlhF6vOiYuA7EsrBadxzEoebbw73FlDMCN580qsoLSDExSbQSVL00kJG6JQvY');
+        var stripe = Stripe('{{ public_key }}');
         var elements = stripe.elements();
 
-        var style = {
-            base: {
-                color: '#32325d',
-                fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
-                fontSmoothing: 'antialiased',
-                fontSize: '16px',
-                '::placeholder': {
-                    color: '#aab7c4'
-                },
-                border: '1px solid #ced4da',
-                padding: '10px'
-            },
-            invalid: {
-                color: '#fa755a',
-                iconColor: '#fa755a'
-            }
-        };
-
-        var cardElement = elements.create('card', { style: style });
+        var cardElement = elements.create('card');
         cardElement.mount('#card-element');
 
-        var form = document.getElementById('payment-form');
-        form.addEventListener('submit', function(event) {
+        cardElement.on('change', function(event) {
+            var displayError = document.getElementById('card-errors');
+            if (event.error) {
+                displayError.textContent = event.error.message;
+            } else {
+                displayError.textContent = '';
+            }
+        });
+
+        document.getElementById('payment-form').addEventListener('submit', function(event) {
             event.preventDefault();
 
             stripe.createToken(cardElement).then(function(result) {
                 if (result.error) {
-                    // Show error in #card-errors
-                    document.getElementById('card-errors').textContent = result.error.message;
+                    // Inform the user if there was an error
+                    var errorElement = document.getElementById('card-errors');
+                    errorElement.textContent = result.error.message;
                 } else {
-                    // Insert the token into the form and submit
+                    // Send the token to your server
+                    var form = document.getElementById('payment-form');
                     var hiddenInput = document.createElement('input');
                     hiddenInput.setAttribute('type', 'hidden');
                     hiddenInput.setAttribute('name', 'stripeToken');
                     hiddenInput.setAttribute('value', result.token.id);
                     form.appendChild(hiddenInput);
 
+                    // Submit the form
                     form.submit();
                 }
             });
