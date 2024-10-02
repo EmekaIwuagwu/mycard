@@ -67,6 +67,7 @@ def ach_charge():
     amount = int(float(request.form['amount']) * 100)  # Convert to cents
     account_number = request.form['account_number']
     routing_number = request.form['routing_number']
+    return_url = 'http://bizmark.com/success'  # Set this to your actual success page
 
     try:
         payment_method = stripe.PaymentMethod.create(
@@ -74,7 +75,7 @@ def ach_charge():
             us_bank_account={
                 'account_number': account_number,
                 'routing_number': routing_number,
-                'account_holder_type': 'individual',
+                'account_holder_type': 'individual',  # or 'company'
             },
             billing_details={
                 'name': request.form['name'],
@@ -85,13 +86,10 @@ def ach_charge():
             amount=amount,
             currency='usd',
             payment_method=payment_method.id,
-            automatic_payment_methods={
-                'enabled': True,  # Enables automatic payment methods
-                'allow_redirects': 'never',  # Disables redirects
-            },
             confirmation_method='automatic',
             confirm=True,
             description='ACH Payment for amount $' + '{:.2f}'.format(amount / 100.0),
+            return_url=return_url  # Add return URL here
         )
 
         return redirect('/success?ref={}'.format(payment_intent.id))
