@@ -69,35 +69,37 @@ def ach_charge():
     routing_number = request.form['routing_number']
 
     try:
-        # Corrected version: Pass account_holder_name and other billing details in 'billing_details'
         payment_method = stripe.PaymentMethod.create(
             type='us_bank_account',
             us_bank_account={
                 'account_number': account_number,
                 'routing_number': routing_number,
-                'account_holder_type': 'individual',  # or 'company'
+                'account_holder_type': 'individual',
             },
             billing_details={
-                'name': request.form['name'],  # Move account_holder_name here
+                'name': request.form['name'],
             }
         )
 
-        # Create a PaymentIntent for the ACH payment
         payment_intent = stripe.PaymentIntent.create(
             amount=amount,
             currency='usd',
             payment_method=payment_method.id,
+            automatic_payment_methods={
+                'enabled': True,  # Enables automatic payment methods
+                'allow_redirects': 'never',  # Disables redirects
+            },
             confirmation_method='automatic',
             confirm=True,
             description='ACH Payment for amount $' + '{:.2f}'.format(amount / 100.0),
         )
-        
+
         return redirect('/success?ref={}'.format(payment_intent.id))
 
     except stripe.error.StripeError as e:
-        # Python 2.7 string formatting
         print("Stripe Error: {}".format(str(e)))
         return 'Error: {}'.format(str(e))
+
 
 
 @app.route('/success')
