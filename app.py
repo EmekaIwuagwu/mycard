@@ -5,8 +5,8 @@ import stripe
 app = Flask(__name__)
 
 # Hardcoded Stripe secret and public keys
-STRIPE_PUBLIC_KEY = 'pk_test_51Q44BMFHz9inXqLwQhDWvdMJFrWWpiGyRxlusfoDkT9bAIBy1Chsdw7AJflhOWmxF5bp6CXyRscKUTveS1m5tOGM00uKJKZALZ'
-STRIPE_SECRET_KEY = 'sk_test_51Q44BMFHz9inXqLwaRmVsewpCyTkD233i79dkIchcfLuSQLoCmZqMpdLhikiZOSnRc57SPfWLI2BtVG1A6BSPAbU00vfIVLRph'
+STRIPE_PUBLIC_KEY = 'pk_live_51R9ho4GH62f0e6wF0ZqSvLYMWGUKDAgCJsGqBZWlMlPKMIWZtykkEf6bbMcSO3drFfeJ4l7ECqmvtKFIQB5erkQU00GLKQ7M2B'
+STRIPE_SECRET_KEY = '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'
 
 # Set the Stripe secret key
 stripe.api_key = STRIPE_SECRET_KEY
